@@ -31,6 +31,22 @@
     return self;
 }
 
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        // default style, you can set new style
+        self.tagFontSize = 12;
+        self.tagSpace = 10;
+        self.padding = UIEdgeInsetsMake(10, 10, 10, 10);
+        self.tagTextPadding = UIEdgeInsetsMake(3, 5, 3, 5);
+        
+        [self addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                           action:@selector(autoAddEdtingTag)]];
+    }
+    return self;
+}
+
 - (void)addTag:(NSString *)tag {
     if([self isEmptyString:tag]) {
         return;
@@ -61,7 +77,9 @@
     for(MKTagLabel *tag in self.subviews) {
         if([self stringIsEquals:tag.text to:tagString]) {
             [tag removeFromSuperview];
-            [self.delegate mkTagView:self onRemove:tag];
+            if([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
+                [self.delegate mkTagView:self onRemove:tag];
+            }
         }
     }
 }
@@ -217,7 +235,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag editingStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
+    if([self.delegate respondsToSelector:@selector(mkTagView:editingStyle:)]) {
         [self.delegate mkTagView:self editingStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = [UIColor clearColor];
@@ -228,7 +246,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag editSelectedStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
+    if([self.delegate respondsToSelector:@selector(mkTagView:editSelectedStyle:)]) {
         [self.delegate mkTagView:self editSelectedStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = kMKDefaultColor;
@@ -239,7 +257,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag showSelectedStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
+    if([self.delegate respondsToSelector:@selector(mkTagView:showSelectedStyle:)]) {
         [self.delegate mkTagView:self showSelectedStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = kMKDefaultColor;
@@ -250,7 +268,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag showStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
+    if([self.delegate respondsToSelector:@selector(mkTagView:showStyle:)]) {
         [self.delegate mkTagView:self showStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = [UIColor whiteColor];
