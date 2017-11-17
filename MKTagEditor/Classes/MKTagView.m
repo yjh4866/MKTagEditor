@@ -21,13 +21,13 @@
 - (instancetype)init {
     self = [super init];
     // default style, you can set new style
+    self.tagColor = [UIColor blackColor];
     self.tagFontSize = 12;
     self.tagSpace = 10; 
     self.padding = UIEdgeInsetsMake(10, 10, 10, 10);
     self.tagTextPadding = UIEdgeInsetsMake(3, 5, 3, 5);
     
-    [self addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
-                                                                       action:@selector(autoAddEdtingTag)]];
+    [self addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(resignFirstResponder)]];
     return self;
 }
 
@@ -36,15 +36,32 @@
     self = [super initWithCoder:coder];
     if (self) {
         // default style, you can set new style
+        self.tagColor = [UIColor blackColor];
         self.tagFontSize = 12;
         self.tagSpace = 10;
         self.padding = UIEdgeInsetsMake(10, 10, 10, 10);
         self.tagTextPadding = UIEdgeInsetsMake(3, 5, 3, 5);
         
-        [self addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self
-                                                                           action:@selector(autoAddEdtingTag)]];
+        [self addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(resignFirstResponder)]];
     }
     return self;
+}
+
+- (BOOL)becomeFirstResponder
+{
+    MKTagItem *tag = [self.subviews lastObject];
+    if(tag.style == MKTagStyleEditing) {
+        return [tag.label becomeFirstResponder];
+    }
+    return NO;
+}
+- (BOOL)resignFirstResponder
+{
+    MKTagItem *tag = [self.subviews lastObject];
+    if(tag.style == MKTagStyleEditing) {
+        return [tag.label resignFirstResponder];
+    }
+    return NO;
 }
 
 - (void)addTag:(NSString *)tag {
@@ -65,6 +82,9 @@
     } else {
         [self addSubview:label];
     }
+    if ([self.delegate respondsToSelector:@selector(mkTagView:didCreateNewTag:)]) {
+        [self.delegate mkTagView:self didCreateNewTag:tag];
+    }
 }
 
 - (void)addTags:(NSArray *)tags {
@@ -77,7 +97,7 @@
     for(MKTagLabel *tag in self.subviews) {
         if([self stringIsEquals:tag.text to:tagString]) {
             [tag removeFromSuperview];
-            if([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
+            if ([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
                 [self.delegate mkTagView:self onRemove:tag];
             }
         }
@@ -137,7 +157,7 @@
         MKTagItem *v = [self.subviews lastObject];
         if(!v || v.style != MKTagStyleEditing) {
             // if has no edit style tag, add one
-            MKTagItem *label = [self createTagWithStyle:MKTagStyleEditing tag:@"输入标签"];
+            MKTagItem *label = [self createTagWithStyle:MKTagStyleEditing tag:@"最多添加10个标签"];
             label.label.placeholder = @"输入标签";
             label.text = nil;
             [self addSubview:label];
@@ -155,9 +175,15 @@
     label.tagviewDelegate = self;
     label.padding = self.tagTextPadding;
     label.text = tag;
+    label.label.textColor = self.tagColor;
     label.label.font = [UIFont systemFontOfSize:self.tagFontSize];
     [label sizeToFit];
     [label setStyle:style];
+    if (style == MKTagStyleEditing) {
+        label.label.textAlignment = NSTextAlignmentLeft;
+    } else {
+        label.label.textAlignment = NSTextAlignmentCenter;
+    }
     return label;
 }
 
@@ -193,7 +219,7 @@
     CGRect containerFrame = self.frame;
     containerFrame.size.height = containerHeight;
     self.frame = containerFrame;
-    if([self.delegate respondsToSelector:@selector(mkTagView:sizeChange:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:sizeChange:)]) {
         [self.delegate mkTagView:self sizeChange:self.frame];
     }
     [UIView commitAnimations];
@@ -214,7 +240,14 @@
     if(tag.style == MKTagStyleEditing) {
         NSString *tagString = tag.text;
         if(![self isEmptyString:tagString]) {
-            [self addTag:tagString];
+            if ([self.delegate respondsToSelector:@selector(mkTagView:willCreateNewTag:)]) {
+                tagString = [self.delegate mkTagView:self willCreateNewTag:tagString];
+                if (tagString.length > 0) {
+                    [self addTag:tagString];
+                }
+            } else {
+                [self addTag:tagString];
+            }
             tag.text = nil;
         }
     }
@@ -224,7 +257,7 @@
 
 // default style, if user don't implement style deledate
 - (void)mkTagView:(MKTagView *)tag editableStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:editableStyle:)]) {
         [self.delegate mkTagView:self editableStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = [UIColor whiteColor];
@@ -235,7 +268,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag editingStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editingStyle:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:editingStyle:)]) {
         [self.delegate mkTagView:self editingStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = [UIColor clearColor];
@@ -246,7 +279,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag editSelectedStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:editSelectedStyle:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:editSelectedStyle:)]) {
         [self.delegate mkTagView:self editSelectedStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = kMKDefaultColor;
@@ -257,7 +290,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag showSelectedStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:showSelectedStyle:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:showSelectedStyle:)]) {
         [self.delegate mkTagView:self showSelectedStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = kMKDefaultColor;
@@ -268,7 +301,7 @@
     }
 }
 - (void)mkTagView:(MKTagView *)tag showStyle:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:showStyle:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:showStyle:)]) {
         [self.delegate mkTagView:self showStyle:tagLabel];
     } else {
         tagLabel.backgroundColor = [UIColor whiteColor];
@@ -290,7 +323,7 @@
     } else if(selectedTag.style == MKTagStyleEditSelected) {
         NSString *tagString = selectedTag.text;
         [self removeTag:tagString];
-        if([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
+        if ([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
             [self.delegate mkTagView:self onRemove:tagLabel];
         }
     }
@@ -301,14 +334,14 @@
 }
 
 - (void)mkTagView:(MKTagView *)tagview onSelect:(MKTagLabel *)tagLabel {
-    if([self.delegate respondsToSelector:@selector(mkTagView:onSelect:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:onSelect:)]) {
         [self.delegate mkTagView:self onSelect:tagLabel];
     }
 }
 
 - (void)mkTagView:(MKTagView *)tagview onRemove:(MKTagLabel *)tagLabel {
     [self removeTag:tagLabel.text];
-    if([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
+    if ([self.delegate respondsToSelector:@selector(mkTagView:onRemove:)]) {
         [self.delegate mkTagView:self onRemove:tagLabel];
     }
 }

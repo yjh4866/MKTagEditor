@@ -44,6 +44,10 @@ typedef NS_ENUM(NSInteger, MKTagStyle) {
 - (void)mkTagView:(MKTagView *)tagview deleteOnEmpty:(MKTagLabel *)tagLabel;
 // tag not empty & keyboard press RETURN !!don't rewrite!!
 - (void)mkTagView:(MKTagView *)tagview returnOnNotEmpty:(MKTagLabel *)tagLabel;
+// will create new tag.
+- (NSString *)mkTagView:(MKTagView *)tagview willCreateNewTag:(NSString *)tag;
+// did create new tag.
+- (void)mkTagView:(MKTagView *)tagview didCreateNewTag:(NSString *)tag;
 @end
 
 #pragma mark - MKTagView
@@ -52,6 +56,7 @@ typedef NS_ENUM(NSInteger, MKTagStyle) {
 
 @property(nonatomic, assign) BOOL editable;// default is false, if true, editor has a input label, can delete
 @property(nonatomic, assign) CGFloat tagSpace;// space between two tag, default is 10
+@property(nonatomic, assign) UIColor *tagColor; // default is blackColor
 @property(nonatomic, assign) CGFloat tagFontSize; // default is 12
 @property(nonatomic) UIEdgeInsets padding; // container inner spacing, default is {10, 10, 10, 10}
 @property(nonatomic) UIEdgeInsets tagTextPadding; // tag text inner spaces, default is {3, 5, 3, 5}

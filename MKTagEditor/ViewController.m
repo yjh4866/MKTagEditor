@@ -92,4 +92,20 @@ static NSInteger SelectViewTag = 2;
 //- (void)mkTagView:(MKTagView *)tagview showStyle:(MKTagLabel *)tagLabel {}
 //- (void)mkTagView:(MKTagView *)tagview showSelectedStyle:(MKTagLabel *)tagLabel {}
 
+
+// will create new tag.
+- (NSString *)mkTagView:(MKTagView *)tagview willCreateNewTag:(NSString *)tag
+{
+    // 每个标签最多10个字
+    if (tag.length > 10) {
+        return [tag substringToIndex:10];
+    }
+    // 最多十个标签
+    if (tagview.allTags.count >= 10) {
+        [tagview resignFirstResponder];
+        return nil;
+    }
+    return tag;
+}
+
 @end

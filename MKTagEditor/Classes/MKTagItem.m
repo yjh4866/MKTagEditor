@@ -148,6 +148,10 @@
     return [self textRectForBounds:bounds];
 }
 
+- (void)textFieldDidEndEditing:(UITextField *)textField
+{
+    [self textFieldShouldReturn:textField];
+}
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if(textField.text) {
         [self.tagviewDelegate mkTagView:nil returnOnNotEmpty:self];
